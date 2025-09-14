@@ -1,0 +1,72 @@
+name: Build iOS App and IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.5'
+        channel: 'stable'
+    
+    - name: Flutter doctor
+      run: flutter doctor -v
+    
+    - name: List directory contents
+      run: |
+        echo "=== Current directory ==="
+        pwd
+        echo "=== Directory contents ==="
+        ls -la
+        echo "=== Flutter project structure ==="
+        find . -name "pubspec.yaml" -type f
+        find . -name "ios" -type d
+    
+    - name: Install dependencies
+      run: flutter pub get
+    
+    - name: Build iOS app (no codesign)
+      run: flutter build ios --release --no-codesign
+    
+    - name: Build IPA package
+      run: |
+        echo "=== Building IPA ==="
+        flutter build ipa --release --export-method=ad-hoc --no-codesign
+        echo "=== IPA build completed ==="
+    
+    - name: List build artifacts
+      run: |
+        echo "=== iOS Build Directory ==="
+        ls -la build/ios/
+        echo "=== IPA Directory ==="
+        ls -la build/ios/ipa/ || echo "IPA directory not found"
+        echo "=== Runner.app ==="
+        ls -la build/ios/iphoneos/ || echo "iphoneos directory not found"
+        echo "=== Find all IPA files ==="
+        find build -name "*.ipa" -type f || echo "No IPA files found"
+        echo "=== Find all APP files ==="
+        find build -name "*.app" -type d || echo "No APP files found"
+    
+    - name: Upload IPA file
+      uses: actions/upload-artifact@v4
+      with:
+        name: zulip-ios-app
+        path: build/ios/ipa/
+        retention-days: 30
+      continue-on-error: true
+    
+    - name: Upload Runner.app
+      uses: actions/upload-artifact@v4
+      with:
+        name: zulip-ios-app-bundle
+        path: build/ios/iphoneos/Runner.app
+        retention-days: 30
