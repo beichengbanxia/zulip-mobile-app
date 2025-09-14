@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zulip Mobile</string>
+    <string name="app_description">Zulip团队聊天移动端应用</string>
+</resources>
